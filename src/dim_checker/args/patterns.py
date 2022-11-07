@@ -5,7 +5,7 @@ from dim_checker.errors import FormulaCharacterError, FormulaParenthesisError
 class Pattern:
 
     def __init__(self, pattern: str) -> None:
-        """Initialize pattern and extract formulas.
+        """Initializes pattern and extract formulas.
 
         Args:
             pattern (str): pattern string. The format of the pattern is the following:
@@ -19,19 +19,28 @@ class Pattern:
             opened parenthesis must be closed.
         """
 
+        self.pattern = pattern
         in_formula, out_formula = self.parse_pattern(pattern)
 
         self.in_dims, self.in_variables = self.parse_formula(in_formula)
         self.out_dims, self.out_variables = self.parse_formula(out_formula)
 
+    def __repr__(self) -> str:
+        """Creates and returns description for the current pattern.
+
+        Returns:
+            str: pattern description.
+        """
+        return f"Pattern: {self.pattern}."
+
     def parse_pattern(self, pattern: str) -> list[str]:
-        """Parse the pattern and return input and output formulas included in pattern".
+        """Parses the pattern and returns input and output formulas included in pattern".
 
         Args:
             pattern (str): pattern of the form "in_formula -> out_formula".
 
         Returns:
-            Tuple[str, str]: results of the pattern parsing, returns in_formula and 
+            list[str]: results of the pattern parsing, returns in_formula and 
             out_formula as strings.
         """
         # remove spaces
@@ -72,6 +81,11 @@ class Pattern:
                 n_par += 1
 
             elif c == ")":
+                
+                # raise error if empty parenthesis
+                if exp == "(":
+                    raise FormulaParenthesisError(formula)
+
                 n_par -= 1
                 exp += c
                 # if the exp ends add it to the dimensions, else keep going.
