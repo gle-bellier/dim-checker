@@ -10,8 +10,16 @@ class Formula:
         Args:
             formula (str): input or output formula.
         """
+        self.formula = formula
+        self.dims, self.variables = self.parse_formula(formula)
 
-        pass 
+    def __repr__(self) -> str:
+        """Creates string representation of the formula.
+
+        Returns:
+            str: string representation of the formula.
+        """
+        return f"Formula: {self.formula}."
 
     def parse_formula(self, formula: str) -> Tuple[list[str], set[str]]:
         """Parse the formula into list of the dimensions and the set 
