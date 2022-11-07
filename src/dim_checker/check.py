@@ -93,7 +93,6 @@ class DimChecker:
     def __check_out_shape(self, out: torch.Tensor, end_dims: list,
                       variables: set) -> bool:
 
-        correct_shape = True
         # check if the shapes have the same length
         assert len(out.shape) == len(end_dims), f"The output shape does not have the expected number of dimensions. Expect {len(end_dims)} and got {len(out.shape)}."
 
