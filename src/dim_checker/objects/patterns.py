@@ -1,6 +1,5 @@
-from typing import Tuple
-from dim_checker.errors import FormulaCharacterError, FormulaParenthesisError
-
+from dim_checker.objects.formulas import Formula
+from dim_checker.errors.pattern_errors import PatternNumberFormulasError
 
 class Pattern:
 
@@ -20,10 +19,8 @@ class Pattern:
         """
 
         self.pattern = pattern
-        in_formula, out_formula = self.parse_pattern(pattern)
+        self.in_formula, self.out_formula = self.parse_pattern(pattern)
 
-        self.in_dims, self.in_variables = self.parse_formula(in_formula)
-        self.out_dims, self.out_variables = self.parse_formula(out_formula)
 
     def __repr__(self) -> str:
         """Creates and returns description for the current pattern.
@@ -33,7 +30,7 @@ class Pattern:
         """
         return f"Pattern: {self.pattern}."
 
-    def parse_pattern(self, pattern: str) -> list[str]:
+    def parse_pattern(self, pattern: str) -> list[Formula]:
         """Parses the pattern and returns input and output formulas included in pattern".
 
         Args:
@@ -48,10 +45,12 @@ class Pattern:
         # split the formula
         formulas = pattern.split("->")
         # check if there are exactly two formulas
-        return formulas
+        if len(formulas)!=2:
+            raise PatternNumberFormulasError(pattern)
 
+        in_formula, out_formula = formulas
+        # create in and out formulas object
+        return [Formula(in_formula), Formula(out_formula)]
             
 
 
-
-p = Pattern("abc -> bcd")
