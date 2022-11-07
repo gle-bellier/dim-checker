@@ -4,7 +4,7 @@ from typing import Tuple, List, Any, Callable
 import random
 
 
-from dim_checker.parsing import parse_patterns, parse_constraints
+from dim_checker.data.patterns import parse_patterns, parse_constraints
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
 
