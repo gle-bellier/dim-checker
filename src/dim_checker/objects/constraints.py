@@ -1,4 +1,4 @@
-from dim_checker.errors import ConstraintDimError, ConstraintTypeError
+from dim_checker.errors.constraint_errors import ConstraintDimError, ConstraintTypeError
 
 
 class Constraints:
