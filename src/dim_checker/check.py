@@ -4,7 +4,8 @@ from typing import Tuple, List, Any, Callable
 import random
 
 
-from dim_checker.data.patterns import parse_patterns, parse_constraints
+from dim_checker.args.patterns import Pattern
+from dim_checker.args.constraints import Constraints
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
 
@@ -136,10 +137,12 @@ class DimChecker:
         """
 
         # parse pattern and constraints
-        constraints = parse_constraints(constraints)
+        c = Constraints(constraints).variables
+        p = Pattern(pattern)
+        # get dimensions  
         start_dims, end_dims, start_variables = parse_patterns(pattern)
         # get primes for variables or apply constraints
-        variables = self.__get_variables_values(start_variables, constraints)
+        variables = self.__get_variables_values(start_variables, c)
         # get input
         x = self.get_input(start_dims, variables)
         # check output shape
