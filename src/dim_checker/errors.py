@@ -9,7 +9,8 @@ class FormulaParenthesisError(Exception):
 
 
     def __str__(self):
-        return f"""The formula "{str(self.formula)}" has unclosed parenthesis"""
+        return f"""The formula "{str(self.formula)}" has unclosed or empty parenthesis"""
+
 
 
     
