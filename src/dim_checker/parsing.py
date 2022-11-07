@@ -1,104 +1,122 @@
 from typing import Any, List, Tuple, Dict
 
 
+class Pattern:
 
-def parse_pattern(pattern: str) -> Tuple[list, set]:
-    """Parse the input or output dimensions pattern into list 
-    of the dimensions and the set of variables involved in the 
-    dimensions definitions. 
+    def __init__(self, pattern: str) -> None:
+        """Initialize pattern and extract formulas.
 
-    Args:
-        pattern (str): valid pattern.
+        Args:
+            pattern (str): pattern string. The format of the pattern is the following:
+            "input dims formula -> output dims formula". Each formula should follow this 
+            formatting: 
+            - include letters for each dimensions, e.g, batches of elements with 32 features 
+            might be depicted by the formula "bh" and batches of 3 canals 2D pictures with 
+            "bchw". 
+            - you can use arithmetical expressions inside formulas such as (2*n+1). The 
+            multiplication operator * must be written (2n) will raise an error. Every 
+            opened parenthesis must be closed.
+        """
 
-    Raises:
-        ValueError: error if an unauthorized caracter is used in the 
-        pattern string.
+        in_formula, out_formula = self.parse_pattern(pattern)
 
-    Returns:
-        Tuple[list, set]: list of all the dimensions and set of all the 
-        variables used to define the dimensions.
-    """
+        in_dims, in_variables = self.parse_formula(in_formula)
+        out_dims, out_variables = self.parse_formula(out_formula)
 
-    # list of all dims (explicit and implicit ones).
-    dims = []
-    # set of all the different variables needed.
-    variables = set()
-    # keep track of the number of opened parenthesis.
-    n_par = 0
-    formula = ""
+    def parse_pattern(pattern: str) -> Tuple[list, list]:
+        """Parse the pattern and return input and output formulas included in pattern".
 
-    for c in pattern:
-        if c == "(":
-            formula += c
-            n_par += 1
+        Args:
+            pattern (str): pattern.
 
-        elif c == ")":
-            n_par -= 1
-            formula += c
-            # if the formula ends add it to the dimensions, else keep going.
-            if n_par == 0:
-                dims += [formula]
-                # reset formula
-                formula = ""
+        Returns:
+            Tuple[list, list, set]: results of the patterns parsing, start dimensions, 
+            end dimensions and variables used for dimensions definition.
+        """
+        # remove spaces
+        pattern = pattern.replace(" ", "")
+        # split the formula
+        return pattern.split("->")
+        
 
-        else:
-            if n_par > 0:
+            
+    def parse_pattern(pattern: str) -> Tuple[list, set]:
+        """Parse the input or output dimensions pattern into list 
+        of the dimensions and the set of variables involved in the 
+        dimensions definitions. 
+
+        Args:
+            pattern (str): valid pattern.
+
+        Raises:
+            ValueError: error if an unauthorized caracter is used in the 
+            pattern string.
+
+        Returns:
+            Tuple[list, set]: list of all the dimensions and set of all the 
+            variables used to define the dimensions.
+        """
+
+        # list of all dims (explicit and implicit ones).
+        dims = []
+        # set of all the different variables needed.
+        variables = set()
+        # keep track of the number of opened parenthesis.
+        n_par = 0
+        formula = ""
+
+        for c in pattern:
+            if c == "(":
                 formula += c
-                # if the caracter is a letter, it is a dimension
-                # we need to store
-                if c.isalpha():
-                    variables.add(c)
+                n_par += 1
+
+            elif c == ")":
+                n_par -= 1
+                formula += c
+                # if the formula ends add it to the dimensions, else keep going.
+                if n_par == 0:
+                    dims += [formula]
+                    # reset formula
+                    formula = ""
+
             else:
-                if c.isalpha():
-                    dims += [c]
-                    variables.add(c)
-
+                if n_par > 0:
+                    formula += c
+                    # if the caracter is a letter, it is a dimension
+                    # we need to store
+                    if c.isalpha():
+                        variables.add(c)
                 else:
-                    raise ValueError(
-                        f"Caracter {c} is not valid for dimensions. Must be a letter."
-                    )
-    return dims, variables
+                    if c.isalpha():
+                        dims += [c]
+                        variables.add(c)
 
-def parse_patterns(pattern: str) -> Tuple[list, list, set]:
-    """Parse the input and output patterns included in the general pattern composed as 
-    follow: "input_pattern -> output_pattern".
+                    else:
+                        raise ValueError(
+                            f"Caracter {c} is not valid for dimensions. Must be a letter."
+                        )
+        return dims, variables
 
-    Args:
-        pattern (str): general pattern.
 
-    Returns:
-        Tuple[list, list, set]: results of the patterns parsing, start dimensions, 
-        end dimensions and variables used for dimensions definition.
-    """
-    # remove spaces
-    pattern = pattern.replace(" ", "")
-    # split the shapes
-    start_pattern, end_pattern = pattern.split("->")
 
-    start_dims, start_variables = parse_pattern(start_pattern)
-    end_dims, _ = parse_pattern(end_pattern)
+    def parse_constraints(constraints: dict) -> dict:
+        """Parse the constraints and check there validity.
 
-    # join the two variables sets
-    return start_dims, end_dims, start_variables
+        Args:
+            constraints (dict): dictionary of constraints on 
+            dimensions.
 
-def parse_constraints(constraints: dict) -> dict:
-    """Parse the constraints and check there validity.
+        Raises:
+            ValueError: error raised when the constant format is not appropriate.
 
-    Args:
-        constraints (dict): dictionary of constraints on 
-        dimensions.
+        Returns:
+            dict: valid constraints.
+        """
+        # check constraints validity
+        for cons in constraints.keys():
+            if len(cons) > 1 or not cons.isalpha():
+                raise ValueError(
+                    f"Constraints must be single letter dimensions, got {cons}={constraints[cons]}."
+                )
 
-    Raises:
-        ValueError: error raised when the constant format is not appropriate.
-
-    Returns:
-        dict: valid constraints.
-    """
-    # check constraints validity
-    for cons in constraints.keys():
-        if len(cons) > 1 or not cons.isalpha():
-            raise ValueError(
-                f"Constraints must be single letter dimensions, got {cons}={constraints[cons]}."
-            )
-
-    return constraints
+        return constraints
