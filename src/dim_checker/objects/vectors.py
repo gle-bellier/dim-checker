@@ -4,7 +4,7 @@ import numpy as np
 
 class Vector:
 
-    def __init__(self, shape: list[int], eval_value: str or int, eval_type: str, device: str) -> None:
+    def __init__(self, shape: list[int], eval_value: str or int, eval_type: str, device: torch.device) -> None:
         self.shape = shape
         self.eval_value = eval_value
         self.eval_type = eval_type
