@@ -17,3 +17,20 @@ def test_vector_formula(formula: str, dims: list[str], variables: set[str]) -> N
     assert vf.dims == dims, vf.variables == variables 
 
 
+
+@pytest.mark.parametrize("formula, nb_vf"
+, [
+    ("bcl", 1),
+    ("b(2*c+1)l", 1),
+    ("bcl, bl", 2),
+    ("b(2*c+1)l, bdl, dhd", 3),
+     
+    
+])
+def test_formula_vector_formulas(formula: str, nb_vf: int) -> None:
+
+    f =  Formula(formula)
+    assert len(f.vector_formulas)==nb_vf 
+
+
+
