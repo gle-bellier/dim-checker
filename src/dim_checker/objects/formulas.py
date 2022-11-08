@@ -3,9 +3,6 @@ from typing import Tuple
 from dim_checker.errors.formula_errors import FormulaCharacterError, FormulaParenthesisError 
 
 
-
-
-
 class VectorFormula:
     
     def __init__(self, vector_formula:str) -> None:
