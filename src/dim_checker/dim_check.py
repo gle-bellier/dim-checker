@@ -2,7 +2,7 @@ import torch
 from typing import  List, Callable
 import random
 
-
+from dim_checker.errors.dimchecker_errors import OutputsNumberError
 from dim_checker.objects import Pattern, Constraints, Formula
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
@@ -141,9 +141,11 @@ class DimChecker:
         if not isinstance(outputs, tuple):
             outputs=(outputs,)
 
+        # check if the number of outputs corresponds to the expected number.
+        if len(outputs)!=len(pattern.out_formula.vector_formulas):
+            raise OutputsNumberError(len(outputs), len(pattern.out_formula.vector_formulas))
 
         # check outputs dimensions
-
         for out, out_vf in zip(outputs, pattern.out_formula.vector_formulas):
             self.__check_out_shape(out, out_vf.dims, eval_variables)
             
