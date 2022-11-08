@@ -27,7 +27,7 @@ def test_sum_last_dim(pattern: str, constraints: dict) -> None:
     ("bcl->bcn", {
         "n": 0
     }),
-    ("bcl->bcl", {"l":1}),
+    ("bcl->bcl", {"l":3}),
     ("bcl->bcnlj", {
         "n": 1
     }),
