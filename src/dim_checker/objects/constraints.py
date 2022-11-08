@@ -9,7 +9,7 @@ class Constraints:
         Args:
             constraints (dict): dimensions constraints.
         """
-        self.variables = self.parse_constraints(constraints)
+        self.constraints = self.parse_constraints(constraints)
 
     def parse_constraints(self, constraints: dict) -> dict:
         """Parse the constraints and check there validity.
