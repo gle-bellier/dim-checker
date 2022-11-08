@@ -1,10 +1,9 @@
 import torch
-import numpy as np
-from typing import Tuple, List, Any, Callable
+from typing import  List, Callable
 import random
 
 
-from dim_checker.objects import Pattern, Constraints
+from dim_checker.objects import Pattern, Constraints, Formula
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
 
@@ -65,69 +64,89 @@ class DimChecker:
             )
         return random.sample(primes, n)
 
-    def __get_variables_values(self, variables: set,
+    def __get_variables_values(self, in_formula: Formula,
                                constraints: dict) -> dict:
         """Set a fixed value for each dimension. We use prime numbers > 3 to reduce the risk of 
         collisions when comparing the output shape. 
 
         Args:
-            shape (set): list of the dimensions variables to assign.
+            in_formula (Formula): input formula object.
             constraints (dict): constraints dictionnary.
 
         Returns:
             dict: dimensions dictionnary. A prime number is assigned to each dimension variables.
         """
-        # get different primes
+
+
+        # merge all needed variables from the differents vector formulas.
+        variables = set()
+        for vf in in_formula.vector_formulas:
+            variables = variables | vf.variables
+
+
+        # get different primes and assign them to variables
         primes = self.__get_primes(len(variables))
         d = dict(zip(variables, primes))
         # merge with the constraints
         return d | constraints
 
-    def get_input(self, start_dims: List[str],
+    def __get_input(self, in_dims: List[str],
                   variables: dict) -> InputTensor:
 
         # compute input shape
-        shape = [evaluate_formula(dim, variables) for dim in start_dims]
+        shape = [evaluate_formula(dim, variables) for dim in in_dims]
         return get_eval_tensor(shape, self.eval_value, self.eval_type)
 
-    def __check_out_shape(self, out: torch.Tensor, end_dims: list,
+    def __check_out_shape(self, out: torch.Tensor, out_dims: list,
                       variables: dict) -> None:
 
         # check if the shapes have the same length
-        assert len(out.shape) == len(end_dims), f"The output shape does not have the expected number of dimensions. Expect {len(end_dims)} and got {len(out.shape)}."
+        error_str = f"The output shape does not have the expected number of dimensions. Expect {len(out_dims)} and got {len(out.shape)}."
+        assert len(out.shape) == len(out_dims), error_str
 
-        for dim, out_dim in zip(end_dims, out.shape):
+        for dim, out_dim in zip(out_dims, out.shape):
             # the dimension is a formula
             if len(dim) > 1:
-                assert evaluate_formula(dim, variables) == out_dim, f"Unexpected output shape. Issue with dimension '{dim}'."
+                error_str = f"Unexpected output shape. Issue with dimension '{dim}'."
+                assert evaluate_formula(dim, variables) == out_dim, error_str
             # the dimension is a letter
             else:
                 if dim in variables:
                     # we need to check dim equality
-                    assert int(variables[dim])== out_dim, f"Unexpected output shape. Issue with dimension '{dim}'."
+                    error_str = f"Unexpected output shape. Issue with dimension '{dim}'."
+                    assert int(variables[dim])== out_dim, error_str
     
-    def __run_one_test(self, f: Callable, pattern: str,
-                      constraints: dict) -> None:
+    def __run_one_test(self, f: Callable, pattern: Pattern,
+                      constraints: Constraints) -> None:
         """Run a single test on the output dimensions. Raise error if the output pattern does not match
         the output dimensions.
 
         Args:
             f (Callable): function or nn module to test.
-            pattern (str): pattern describing the input and expected output dimensions.
-            constraints (dict): constraints on variables.
+            pattern (Pattern): pattern describing the input and expected output dimensions.
+            constraints (Constraints): constraints on variables.
         """
-
-        # parse pattern and constraints
-        c = Constraints(constraints).variables
-        p = Pattern(pattern)
         # get evaluation primes for variables and apply constraints
-        eval_variables = self.__get_variables_values(p.in_formula.variables, c)
-        # get input
-        x = self.get_input(p.in_formula.dims, eval_variables)
-        # check output shape
-        self.__check_out_shape(f(x), p.out_formula.dims, eval_variables)
+        eval_variables = self.__get_variables_values(pattern.in_formula, constraints.constraints)
+        
+        
+        # get input vectors
+        in_vectors = []
+        for in_vf in pattern.in_formula.vector_formulas:
+            in_vectors += [self.__get_input(in_vf.dims, eval_variables)]
+
+        # get outputs
+        outputs = f(*in_vectors)
+        # if there is only one output we convert it to a tuple
+        if not isinstance(outputs, tuple):
+            outputs=(outputs,)
 
 
+        # check outputs dimensions
+
+        for out, out_vf in zip(outputs, pattern.out_formula.vector_formulas):
+            self.__check_out_shape(out, out_vf.dims, eval_variables)
+            
 
     def test_dims(self, f: Callable, pattern: str, **constraints) -> None:
         """Test the output dimensions and raise error if the output pattern 
@@ -144,7 +163,18 @@ class DimChecker:
             constraints: constraints over the dimensions used for the tests.
 
         """
+        # parse pattern and constraints
+        p = Pattern(pattern)
+        c = Constraints(constraints)
         for _ in range(self.depth):
-            self.__run_one_test(f, pattern, constraints)
+            self.__run_one_test(f, p, c)
 
 
+
+
+
+def f(x, y):
+    return x+y
+
+
+DimChecker().test_dims(f, "bcl, bcl->bcl, bcl")
