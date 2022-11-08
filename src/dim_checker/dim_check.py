@@ -4,8 +4,7 @@ from typing import Tuple, List, Any, Callable
 import random
 
 
-from dim_checker.objects.patterns import Pattern
-from dim_checker.objects.constraints import Constraints
+from dim_checker.objects import Pattern, Constraints
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
 
@@ -92,7 +91,7 @@ class DimChecker:
         return get_eval_tensor(shape, self.eval_value, self.eval_type)
 
     def __check_out_shape(self, out: torch.Tensor, end_dims: list,
-                      variables: set) -> None:
+                      variables: dict) -> None:
 
         # check if the shapes have the same length
         assert len(out.shape) == len(end_dims), f"The output shape does not have the expected number of dimensions. Expect {len(end_dims)} and got {len(out.shape)}."
@@ -106,26 +105,8 @@ class DimChecker:
                 if dim in variables:
                     # we need to check dim equality
                     assert int(variables[dim])== out_dim, f"Unexpected output shape. Issue with dimension '{dim}'."
-
-    def test_dims(self, f: Callable, pattern: str, **constraints) -> None:
-        """Test the output dimensions and raise error if the output pattern 
-        does not match the output dimensions. Because of the rish of collisions this test 
-        is not a proof that the output dimensions will always be correct but allow fast testing. 
-
-        Args:
-            f (Callable): function or nn module to test.
-            pattern (str): pattern describing the input and expected output dimensions. It must respects 
-            the following rules:
-            -
-            -
-            -
-            constraints: constraints over the dimensions used for the tests.
-
-        """
-        for _ in range(self.depth):
-            self.__get_test_dims(f, pattern, constraints)
-
-    def __get_test_dims(self, f: Callable, pattern: str,
+    
+    def __run_one_test(self, f: Callable, pattern: str,
                       constraints: dict) -> None:
         """Run a single test on the output dimensions. Raise error if the output pattern does not match
         the output dimensions.
@@ -145,3 +126,25 @@ class DimChecker:
         x = self.get_input(p.in_formula.dims, eval_variables)
         # check output shape
         self.__check_out_shape(f(x), p.out_formula.dims, eval_variables)
+
+
+
+    def test_dims(self, f: Callable, pattern: str, **constraints) -> None:
+        """Test the output dimensions and raise error if the output pattern 
+        does not match the output dimensions. Because of the rish of collisions this test 
+        is not a proof that the output dimensions will always be correct but allow fast testing. 
+
+        Args:
+            f (Callable): function or nn module to test.
+            pattern (str): pattern describing the input and expected output dimensions. It must respects 
+            the following rules:
+            -
+            -
+            -
+            constraints: constraints over the dimensions used for the tests.
+
+        """
+        for _ in range(self.depth):
+            self.__run_one_test(f, pattern, constraints)
+
+
