@@ -1,5 +1,5 @@
 import torch
-from dim_checker.check import DimChecker
+from dim_checker.dim_check import DimChecker
 
 import pytest
 

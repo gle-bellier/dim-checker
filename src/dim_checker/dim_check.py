@@ -4,8 +4,8 @@ from typing import Tuple, List, Any, Callable
 import random
 
 
-from dim_checker.args.patterns import Pattern
-from dim_checker.args.constraints import Constraints
+from dim_checker.objects.patterns import Pattern
+from dim_checker.objects.constraints import Constraints
 from dim_checker.utils import evaluate_formula, get_eval_tensor, InputTensor
 
 
@@ -92,7 +92,7 @@ class DimChecker:
         return get_eval_tensor(shape, self.eval_value, self.eval_type)
 
     def __check_out_shape(self, out: torch.Tensor, end_dims: list,
-                      variables: set) -> bool:
+                      variables: set) -> None:
 
         # check if the shapes have the same length
         assert len(out.shape) == len(end_dims), f"The output shape does not have the expected number of dimensions. Expect {len(end_dims)} and got {len(out.shape)}."
@@ -139,11 +139,9 @@ class DimChecker:
         # parse pattern and constraints
         c = Constraints(constraints).variables
         p = Pattern(pattern)
-        # get dimensions  
-        start_dims, end_dims, start_variables = parse_patterns(pattern)
-        # get primes for variables or apply constraints
-        variables = self.__get_variables_values(start_variables, c)
+        # get evaluation primes for variables and apply constraints
+        eval_variables = self.__get_variables_values(p.in_formula.variables, c)
         # get input
-        x = self.get_input(start_dims, variables)
+        x = self.get_input(p.in_formula.dims, eval_variables)
         # check output shape
-        self.__check_out_shape(f(x), end_dims, variables)
+        self.__check_out_shape(f(x), p.out_formula.dims, eval_variables)
