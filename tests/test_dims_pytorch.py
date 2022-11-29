@@ -80,3 +80,68 @@ def test_error_sum_m2_dim(pattern: str, constraints: dict) -> None:
         DimChecker().test_dims(f, pattern, **constraints)
 
     assert not "Error should have been raised." in str(excinfo.value)
+
+@pytest.mark.parametrize("pattern, constraints", [
+    ("bcl, bcl ->bcn", {
+    }),
+    ("bcl, bnc->bcl", {"l":1}),
+    ("bcl, qwer->bcl", {
+        "n": 1
+    }),
+])
+def test_multi_input(pattern: str, constraints: dict) -> None:
+
+    def f(x, y):
+        return x
+        
+    DimChecker().test_dims(f, pattern, **constraints)
+
+@pytest.mark.parametrize("pattern, constraints", [
+    ("bcl, bcl->bcn", {
+        "n": 0
+    }),
+    ("bcl, bcl->bc(2*l)", {"l":1}),
+    ("bcl, bcn->bcnlj", {
+        "n": 1
+    }),
+])
+def test_error_multi_input(pattern: str, constraints: dict) -> None:
+
+    def f(x, y):
+       return x 
+
+    with pytest.raises(Exception) as excinfo:
+        DimChecker().test_dims(f, pattern, **constraints)
+
+    assert not "Error should have been raised." in str(excinfo.value)
+
+@pytest.mark.parametrize("pattern, constraints", [
+    ("bcl->bcl, bcn", {
+    }),
+    ("bcl->bcl, bcn", {"n":1}),
+])
+def test_multi_output(pattern: str, constraints: dict) -> None:
+
+    def f(x):
+        return x, x[...,0:1]
+        
+    DimChecker().test_dims(f, pattern, **constraints)
+
+@pytest.mark.parametrize("pattern, constraints", [
+    ("bcl->bcn, bcm", {
+        "n": 0
+    }),
+    ("bcl->nc, bc(2*l)", {"l":1}),
+    ("bcl->bcl, bcl bcnlj", {
+        "n": 1
+    }),
+])
+def test_error_multi_output(pattern: str, constraints: dict) -> None:
+
+    def f(x, y):
+       return x 
+
+    with pytest.raises(Exception) as excinfo:
+        DimChecker().test_dims(f, pattern, **constraints)
+
+    assert not "Error should have been raised." in str(excinfo.value)
